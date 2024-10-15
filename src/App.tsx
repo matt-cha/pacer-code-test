@@ -5,11 +5,12 @@ interface User {
   name: string;
   email: string;
   phone: string;
+  id: number;
 }
 
 export default function App() {
   const [data, setData] = useState<User[]>([]);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -23,6 +24,7 @@ export default function App() {
         }
         const result = await response.json();
         setData(result);
+        setError(null);
       } catch (err) {
         setError("Failed to load the data.");
       }
@@ -54,6 +56,24 @@ export default function App() {
     }
   };
 
+  const deleteUser = async (id: number) => {
+    try {
+      const response = await fetch(
+        `https://jsonplaceholder.typicode.com/users/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to delete the user.");
+      }
+      setData(data.filter((user) => user.id !== id));
+      message.success("User deleted successfully.");
+    } catch (error) {
+      message.error("Failed to delete the user.");
+    }
+  };
+
   const columns = [
     {
       title: "Name",
@@ -69,6 +89,15 @@ export default function App() {
       title: "Phone Number",
       dataIndex: "phone",
       key: "phone",
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_: any, record: User) => (
+        <Button type="primary" danger onClick={() => deleteUser(record.id)}>
+          Delete
+        </Button>
+      ),
     },
   ];
 
@@ -89,10 +118,7 @@ export default function App() {
           name="name"
           rules={[{ required: true, message: "Please enter your name" }]}
         >
-          <Input
-            placeholder="Name"
-            className="p-2 border border-gray-300 rounded w-full"
-          />
+          <Input placeholder="Name" className="p-2 border rounded w-full" />
         </Form.Item>
 
         <Form.Item
@@ -103,14 +129,11 @@ export default function App() {
             { type: "email", message: "Please enter a valid email" },
           ]}
         >
-          <Input
-            placeholder="Email"
-            className="p-2 border border-gray-300 rounded w-full"
-          />
+          <Input placeholder="Email" className="p-2 border rounded w-full" />
         </Form.Item>
 
         <Form.Item
-          label="Phone"
+          label="Phone Number"
           name="phone"
           rules={[
             { required: true, message: "Please enter your phone number" },
@@ -122,14 +145,14 @@ export default function App() {
         >
           <Input
             placeholder="Phone Number"
-            className="p-2 border border-gray-300 rounded w-full"
+            className="p-2 border rounded w-full"
           />
         </Form.Item>
 
         <div className="flex justify-end">
           <Button
             type="primary"
-            className="bg-blue-500 text-white py-2 px-4 rounded"
+            className="bg-green-500 text-white py-2 px-4 rounded"
             htmlType="submit"
           >
             Add Contact
